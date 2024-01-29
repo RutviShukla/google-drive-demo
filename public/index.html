@@ -1,8 +1,53 @@
+<!--
+Copyright 2018 Google LLC
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    https://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+<!-- [START drive_quickstart] -->
 <!DOCTYPE html>
 <html>
   <head>
     <title>Drive API Quickstart</title>
     <meta charset="utf-8" />
+    <style>
+      #file_container {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr); /* Adjust the number of columns as needed */
+        gap: 16px; /* Adjust the gap between icons as needed */
+      }
+    
+      .file-icon {
+        text-align: center;
+      }
+    
+      .file-icon img {
+        max-width: 100%;
+        height: auto;
+      }
+
+      #popup {
+        display: none;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        padding: 20px;
+        background-color: #fff;
+        border: 1px solid #ccc;
+        z-index: 1000;
+      }
+    </style>
+    
   </head>
   <body>
     <p>Drive API Quickstart</p>
@@ -10,6 +55,28 @@
     <!--Add buttons to initiate auth sequence and sign out-->
     <button id="authorize_button" onclick="handleAuthClick()">Authorize</button>
     <button id="signout_button" onclick="handleSignoutClick()">Sign Out</button>
+
+    <button id="create_file_button" onclick="openPopup()" style="visibility: hidden;">Create File</button>
+    <div id="popup">
+      <label for="file_name">File Name:</label>
+      <input type="text" id="file_name" placeholder="Enter file name" />
+      <br />
+      <label for="file_type">Choose a file type:</label>
+      <select id="file_type">
+        <option value="text/plain">Plain Text</option>
+        <option value="application/vnd.google-apps.document">Google Doc</option>
+        <option value="application/vnd.google-apps.spreadsheet">Google Sheets</option>
+        <option value="application/vnd.google-apps.presentation">Google Slides</option>
+      </select>
+      <br />
+      <button onclick="createFile()">Create</button>
+      <button onclick="closePopup()">Cancel</button>
+    </div>
+
+    <!-- <button id="create_file_button" onclick="createFile()" style="visibility: hidden;">Create File</button> -->
+
+    <div id="file_container"></div>
+
 
     <pre id="content" style="white-space: pre-wrap;"></pre>
 
@@ -28,7 +95,8 @@
 
       // Authorization scopes required by the API; multiple scopes can be
       // included, separated by spaces.
-      const SCOPES = 'https://www.googleapis.com/auth/drive.metadata.readonly';
+      // const SCOPES = 'https://www.googleapis.com/auth/drive.metadata.readonly';
+      const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 
       let tokenClient;
       let gapiInited = false;
@@ -89,6 +157,7 @@
           }
           document.getElementById('signout_button').style.visibility = 'visible';
           document.getElementById('authorize_button').innerText = 'Refresh';
+          document.getElementById('create_file_button').style.visibility = 'visible';
           await listFiles();
         };
 
@@ -119,11 +188,34 @@
       /**
        * Print metadata for first 10 files.
        */
+      // async function listFiles() {
+      //   let response;
+      //   try {
+      //     response = await gapi.client.drive.files.list({
+      //       'pageSize': 10,
+      //       'fields': 'files(id, name)',
+      //     });
+      //   } catch (err) {
+      //     document.getElementById('content').innerText = err.message;
+      //     return;
+      //   }
+      //   const files = response.result.files;
+      //   if (!files || files.length == 0) {
+      //     document.getElementById('content').innerText = 'No files found.';
+      //     return;
+      //   }
+      //   // Flatten to string to display
+      //   const output = files.reduce(
+      //       (str, file) => `${str}${file.name} (${file.id})\n`,
+      //       'Files:\n');
+      //   document.getElementById('content').innerText = output;
+      // }
+
       async function listFiles() {
         let response;
         try {
           response = await gapi.client.drive.files.list({
-            'pageSize': 10,
+            'pageSize': 100,
             'fields': 'files(id, name)',
           });
         } catch (err) {
@@ -135,14 +227,75 @@
           document.getElementById('content').innerText = 'No files found.';
           return;
         }
-        // Flatten to string to display
-        const output = files.reduce(
-            (str, file) => `${str}${file.name} (${file.id})\n`,
-            'Files:\n');
-        document.getElementById('content').innerText = output;
+
+        const fileContainer = document.getElementById('file_container');
+        fileContainer.innerHTML = '';
+        const iconUrl = 'file-icon.svg';
+
+        files.forEach(file => {
+          const icon = document.createElement('div');
+          icon.innerHTML = `<img src="${iconUrl}" width="50" height="50" alt="${file.name}" onclick="openFile('${file.id}')">
+          <p>${file.name}</p>`;
+          fileContainer.appendChild(icon);
+        });
+      }
+
+      async function openFile(fileId) {
+        try {
+          const file = await gapi.client.drive.files.get({
+            'fileId': fileId,
+            'fields': 'webContentLink, webViewLink',
+          });
+
+        
+          const webContentLink = file.result.webContentLink;
+          const webViewLink = file.result.webViewLink;
+
+          
+          window.open(webViewLink, '_blank');
+        } catch (err) {
+          console.error('Error opening file:', err);
+        }
+      }
+
+      function openPopup() {
+        document.getElementById('popup').style.display = 'block';
+      }
+
+      function closePopup() {
+        document.getElementById('popup').style.display = 'none';
+      }
+
+
+      async function createFile() {
+        const fileNameInput = document.getElementById('file_name');
+        const fileName = fileNameInput.value.trim();
+        
+        if (!fileName) {
+          alert('Please enter a valid file name.');
+          return;
+        }
+        const fileTypeSelect = document.getElementById('file_type');
+        const selectedFileType = fileTypeSelect.options[fileTypeSelect.selectedIndex].value;
+
+        try {
+          const response = await gapi.client.drive.files.create({
+            resource: {
+              name: fileName,
+              mimeType: selectedFileType,
+            },
+          });
+
+          // const file = response.result;
+          // document.getElementById('content').innerText = `File created: ${file.name} (${file.id})`;
+        } catch (err) {
+          document.getElementById('content').innerText = `Error creating file: ${err.message}`;
+        }
+        closePopup();
       }
     </script>
     <script async defer src="https://apis.google.com/js/api.js" onload="gapiLoaded()"></script>
     <script async defer src="https://accounts.google.com/gsi/client" onload="gisLoaded()"></script>
   </body>
 </html>
+<!-- [END drive_quickstart] -->
