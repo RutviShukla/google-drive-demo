@@ -96,7 +96,7 @@ limitations under the License.
       // Authorization scopes required by the API; multiple scopes can be
       // included, separated by spaces.
       // const SCOPES = 'https://www.googleapis.com/auth/drive.metadata.readonly';
-      const SCOPES = 'https://www.googleapis.com/auth/drive.file';
+      const SCOPES = 'https://www.googleapis.com/auth/drive';
 
       let tokenClient;
       let gapiInited = false;
@@ -216,7 +216,7 @@ limitations under the License.
         try {
           response = await gapi.client.drive.files.list({
             'pageSize': 100,
-            'fields': 'files(id, name)',
+            'fields': 'files(id, name, mimeType, trashed)',
           });
         } catch (err) {
           document.getElementById('content').innerText = err.message;
@@ -230,11 +230,15 @@ limitations under the License.
 
         const fileContainer = document.getElementById('file_container');
         fileContainer.innerHTML = '';
-        const iconUrl = 'file-icon.svg';
+        // const iconUrl = 'file-icon.svg';
 
-        files.forEach(file => {
+        files
+          .filter(file => !file.trashed) 
+          .forEach(file => {
           const icon = document.createElement('div');
-          icon.innerHTML = `<img src="${iconUrl}" width="50" height="50" alt="${file.name}" onclick="openFile('${file.id}')">
+          const isFolder = file.mimeType === 'application/vnd.google-apps.folder';
+          const iconUrl = isFolder ? 'folder-icon.svg' : 'file-icon.svg';
+          icon.innerHTML = `<img src="${iconUrl}" width="50" height="50" alt="${file.name}" onclick="openFile('${file.id}')" oncontextmenu="rightClickMenu('${file.id}')(event)">
           <p>${file.name}</p>`;
           fileContainer.appendChild(icon);
         });
@@ -257,6 +261,75 @@ limitations under the License.
           console.error('Error opening file:', err);
         }
       }
+
+      function rightClickMenu(fileId) {
+        const rightMenu = [
+          { title: 'Delete', action: () => moveFileToTrash(fileId)},
+        ];
+
+        return (e) => {
+          e.preventDefault();
+          showRightClickMenu(e.clientX, e.clientY, rightMenu);
+        };
+      }
+
+      function showRightClickMenu (x, y, menuItems) {
+        const rightClickMenuContainer = document.createElement('div');
+        rightClickMenuContainer.style.position = 'fixed';
+        rightClickMenuContainer.style.top = `${y}px`;
+        rightClickMenuContainer.style.left = `${x}px`;
+        rightClickMenuContainer.style.backgroundColor = '#fff';
+        rightClickMenuContainer.style.border = '1px solid #ccc';
+        rightClickMenuContainer.style.zIndex = '1001';
+
+        menuItems.forEach((item) => {
+      const menuItem = document.createElement('div');
+      menuItem.innerText = item.title;
+      menuItem.style.padding = '8px';
+      menuItem.style.cursor = 'pointer';
+
+      menuItem.addEventListener('click', () => {
+        rightClickMenuContainer.style.display = 'none';
+        item.action();
+      });
+
+      rightClickMenuContainer.appendChild(menuItem);
+    });
+
+    document.body.appendChild(rightClickMenuContainer);
+
+    // Close the context menu when clicking outside of it
+    document.addEventListener('click', () => {
+      rightClickMenuContainer.style.display = 'none';
+    });
+      }
+
+    //   async function deleteFile(fileId) {
+    //   try {
+    //     await gapi.client.drive.files.delete({
+    //       'fileId': fileId,
+    //       'supportsAllDrives': true,
+    //       'enforceSingleParent': true,
+    //     });
+    //     // Optionally update your file list after deletion
+    //     await listFiles();
+    //   } catch (err) {
+    //     console.error('Error deleting file:', err);
+    //   }
+    // }
+
+    async function moveFileToTrash(fileId) {
+      try {
+        await gapi.client.request({
+          'path': `drive/v2/files/${fileId}/trash`,
+          'method': 'POST',
+        });
+        // Optionally update your file list after moving to trash
+        await listFiles();
+      } catch (err) {
+        console.error('Error moving file to trash:', err);
+      }
+    }
 
       function openPopup() {
         document.getElementById('popup').style.display = 'block';
@@ -285,7 +358,7 @@ limitations under the License.
               mimeType: selectedFileType,
             },
           });
-
+          await listFiles();
           // const file = response.result;
           // document.getElementById('content').innerText = `File created: ${file.name} (${file.id})`;
         } catch (err) {
