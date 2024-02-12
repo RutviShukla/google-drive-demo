@@ -265,6 +265,7 @@ limitations under the License.
       function rightClickMenu(fileId) {
         const rightMenu = [
           { title: 'Delete', action: () => moveFileToTrash(fileId)},
+          { title: 'Duplicate', action: () => copyFile(fileId)},
         ];
 
         return (e) => {
@@ -328,6 +329,18 @@ limitations under the License.
         await listFiles();
       } catch (err) {
         console.error('Error moving file to trash:', err);
+      }
+    }
+    async function copyFile(fileId) {
+      try {
+        await gapi.client.request({
+          'path': `drive/v2/files/${fileId}/copy`,
+          'method': 'POST',
+        });
+       
+        await listFiles();
+      } catch (err) {
+        console.error('Error copying file to drive:', err);
       }
     }
 
