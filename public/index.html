@@ -136,6 +136,7 @@ limitations under the License.
         });
         gapiInited = true;
         maybeEnableButtons();
+        checkStoredTokens();
       }
 
       /**
@@ -169,6 +170,13 @@ limitations under the License.
           if (resp.error !== undefined) {
             throw resp;
           }
+          // Save tokens to local storage or session storage
+          localStorage.setItem("access_token", resp.access_token);
+          if (resp.refresh_token) {
+            // Refresh token is only sent on the first authorization
+            localStorage.setItem("refresh_token", resp.refresh_token);
+          }
+
           document.getElementById("signout_button").style.visibility =
             "visible";
           document.getElementById("authorize_button").innerText = "Refresh";
@@ -184,6 +192,28 @@ limitations under the License.
         } else {
           // Skip display of account chooser and consent dialog for an existing session.
           tokenClient.requestAccessToken({ prompt: "" });
+        }
+      }
+
+      // Checks to see if access token is already stored on the client
+      function checkStoredTokens() {
+        const accessToken = localStorage.getItem("access_token");
+        const refreshToken = localStorage.getItem("refresh_token");
+
+        if (accessToken) {
+          // Optionally verify if the access token is still valid
+          // and refresh it using refreshToken if necessary
+          gapi.client.setToken({ access_token: accessToken });
+          document.getElementById("signout_button").style.visibility =
+            "visible";
+          document.getElementById("authorize_button").innerText = "Refresh";
+          document.getElementById("create_file_button").style.visibility =
+            "visible";
+          listFiles(); // or any other initialization function
+        } else {
+          // No stored tokens or access token is expired and no refresh token available
+          document.getElementById("authorize_button").style.visibility =
+            "visible";
         }
       }
 
