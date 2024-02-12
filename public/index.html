@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <!-- [START drive_quickstart] -->
-<!DOCTYPE html>
+<!doctype html>
 <html>
   <head>
     <title>Drive API Quickstart</title>
@@ -22,14 +22,17 @@ limitations under the License.
     <style>
       #file_container {
         display: grid;
-        grid-template-columns: repeat(5, 1fr); /* Adjust the number of columns as needed */
+        grid-template-columns: repeat(
+          5,
+          1fr
+        ); /* Adjust the number of columns as needed */
         gap: 16px; /* Adjust the gap between icons as needed */
       }
-    
+
       .file-icon {
         text-align: center;
       }
-    
+
       .file-icon img {
         max-width: 100%;
         height: auto;
@@ -47,7 +50,6 @@ limitations under the License.
         z-index: 1000;
       }
     </style>
-    
   </head>
   <body>
     <p>Drive API Quickstart</p>
@@ -56,7 +58,13 @@ limitations under the License.
     <button id="authorize_button" onclick="handleAuthClick()">Authorize</button>
     <button id="signout_button" onclick="handleSignoutClick()">Sign Out</button>
 
-    <button id="create_file_button" onclick="openPopup()" style="visibility: hidden;">Create File</button>
+    <button
+      id="create_file_button"
+      onclick="openPopup()"
+      style="visibility: hidden"
+    >
+      Create File
+    </button>
     <div id="popup">
       <label for="file_name">File Name:</label>
       <input type="text" id="file_name" placeholder="Enter file name" />
@@ -65,8 +73,12 @@ limitations under the License.
       <select id="file_type">
         <option value="text/plain">Plain Text</option>
         <option value="application/vnd.google-apps.document">Google Doc</option>
-        <option value="application/vnd.google-apps.spreadsheet">Google Sheets</option>
-        <option value="application/vnd.google-apps.presentation">Google Slides</option>
+        <option value="application/vnd.google-apps.spreadsheet">
+          Google Sheets
+        </option>
+        <option value="application/vnd.google-apps.presentation">
+          Google Slides
+        </option>
       </select>
       <br />
       <button onclick="createFile()">Create</button>
@@ -77,8 +89,7 @@ limitations under the License.
 
     <div id="file_container"></div>
 
-
-    <pre id="content" style="white-space: pre-wrap;"></pre>
+    <pre id="content" style="white-space: pre-wrap"></pre>
 
     <script type="text/javascript">
       /* exported gapiLoaded */
@@ -87,29 +98,31 @@ limitations under the License.
       /* exported handleSignoutClick */
 
       // TODO(developer): Set to client ID and API key from the Developer Console
-      const CLIENT_ID = '634361333695-jlirc95lj49ojuf2dtc2j38jqnj697dc.apps.googleusercontent.com';
-      const API_KEY = 'AIzaSyArf4iOnuuMOfHQT1jmZZ5fFSDce2gQX0A';
+      const CLIENT_ID =
+        "634361333695-jlirc95lj49ojuf2dtc2j38jqnj697dc.apps.googleusercontent.com";
+      const API_KEY = "AIzaSyArf4iOnuuMOfHQT1jmZZ5fFSDce2gQX0A";
 
       // Discovery doc URL for APIs used by the quickstart
-      const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest';
+      const DISCOVERY_DOC =
+        "https://www.googleapis.com/discovery/v1/apis/drive/v3/rest";
 
       // Authorization scopes required by the API; multiple scopes can be
       // included, separated by spaces.
       // const SCOPES = 'https://www.googleapis.com/auth/drive.metadata.readonly';
-      const SCOPES = 'https://www.googleapis.com/auth/drive';
+      const SCOPES = "https://www.googleapis.com/auth/drive";
 
       let tokenClient;
       let gapiInited = false;
       let gisInited = false;
 
-      document.getElementById('authorize_button').style.visibility = 'hidden';
-      document.getElementById('signout_button').style.visibility = 'hidden';
+      document.getElementById("authorize_button").style.visibility = "hidden";
+      document.getElementById("signout_button").style.visibility = "hidden";
 
       /**
        * Callback after api.js is loaded.
        */
       function gapiLoaded() {
-        gapi.load('client', initializeGapiClient);
+        gapi.load("client", initializeGapiClient);
       }
 
       /**
@@ -132,7 +145,7 @@ limitations under the License.
         tokenClient = google.accounts.oauth2.initTokenClient({
           client_id: CLIENT_ID,
           scope: SCOPES,
-          callback: '', // defined later
+          callback: "", // defined later
         });
         gisInited = true;
         maybeEnableButtons();
@@ -143,7 +156,8 @@ limitations under the License.
        */
       function maybeEnableButtons() {
         if (gapiInited && gisInited) {
-          document.getElementById('authorize_button').style.visibility = 'visible';
+          document.getElementById("authorize_button").style.visibility =
+            "visible";
         }
       }
 
@@ -153,21 +167,23 @@ limitations under the License.
       function handleAuthClick() {
         tokenClient.callback = async (resp) => {
           if (resp.error !== undefined) {
-            throw (resp);
+            throw resp;
           }
-          document.getElementById('signout_button').style.visibility = 'visible';
-          document.getElementById('authorize_button').innerText = 'Refresh';
-          document.getElementById('create_file_button').style.visibility = 'visible';
+          document.getElementById("signout_button").style.visibility =
+            "visible";
+          document.getElementById("authorize_button").innerText = "Refresh";
+          document.getElementById("create_file_button").style.visibility =
+            "visible";
           await listFiles();
         };
 
         if (gapi.client.getToken() === null) {
           // Prompt the user to select a Google Account and ask for consent to share their data
           // when establishing a new session.
-          tokenClient.requestAccessToken({prompt: 'consent'});
+          tokenClient.requestAccessToken({ prompt: "consent" });
         } else {
           // Skip display of account chooser and consent dialog for an existing session.
-          tokenClient.requestAccessToken({prompt: ''});
+          tokenClient.requestAccessToken({ prompt: "" });
         }
       }
 
@@ -178,10 +194,10 @@ limitations under the License.
         const token = gapi.client.getToken();
         if (token !== null) {
           google.accounts.oauth2.revoke(token.access_token);
-          gapi.client.setToken('');
-          document.getElementById('content').innerText = '';
-          document.getElementById('authorize_button').innerText = 'Authorize';
-          document.getElementById('signout_button').style.visibility = 'hidden';
+          gapi.client.setToken("");
+          document.getElementById("content").innerText = "";
+          document.getElementById("authorize_button").innerText = "Authorize";
+          document.getElementById("signout_button").style.visibility = "hidden";
         }
       }
 
@@ -215,57 +231,56 @@ limitations under the License.
         let response;
         try {
           response = await gapi.client.drive.files.list({
-            'pageSize': 100,
-            'fields': 'files(id, name, mimeType, trashed)',
+            pageSize: 100,
+            fields: "files(id, name, mimeType, trashed)",
           });
         } catch (err) {
-          document.getElementById('content').innerText = err.message;
+          document.getElementById("content").innerText = err.message;
           return;
         }
         const files = response.result.files;
         if (!files || files.length == 0) {
-          document.getElementById('content').innerText = 'No files found.';
+          document.getElementById("content").innerText = "No files found.";
           return;
         }
 
-        const fileContainer = document.getElementById('file_container');
-        fileContainer.innerHTML = '';
+        const fileContainer = document.getElementById("file_container");
+        fileContainer.innerHTML = "";
         // const iconUrl = 'file-icon.svg';
 
         files
-          .filter(file => !file.trashed) 
-          .forEach(file => {
-          const icon = document.createElement('div');
-          const isFolder = file.mimeType === 'application/vnd.google-apps.folder';
-          const iconUrl = isFolder ? 'folder-icon.svg' : 'file-icon.svg';
-          icon.innerHTML = `<img src="${iconUrl}" width="50" height="50" alt="${file.name}" onclick="openFile('${file.id}')" oncontextmenu="rightClickMenu('${file.id}')(event)">
+          .filter((file) => !file.trashed)
+          .forEach((file) => {
+            const icon = document.createElement("div");
+            const isFolder =
+              file.mimeType === "application/vnd.google-apps.folder";
+            const iconUrl = isFolder ? "folder-icon.svg" : "file-icon.svg";
+            icon.innerHTML = `<img src="${iconUrl}" width="50" height="50" alt="${file.name}" onclick="openFile('${file.id}')" oncontextmenu="rightClickMenu('${file.id}')(event)">
           <p>${file.name}</p>`;
-          fileContainer.appendChild(icon);
-        });
+            fileContainer.appendChild(icon);
+          });
       }
 
       async function openFile(fileId) {
         try {
           const file = await gapi.client.drive.files.get({
-            'fileId': fileId,
-            'fields': 'webContentLink, webViewLink',
+            fileId: fileId,
+            fields: "webContentLink, webViewLink",
           });
 
-        
           const webContentLink = file.result.webContentLink;
           const webViewLink = file.result.webViewLink;
 
-          
-          window.open(webViewLink, '_blank');
+          window.open(webViewLink, "_blank");
         } catch (err) {
-          console.error('Error opening file:', err);
+          console.error("Error opening file:", err);
         }
       }
 
       function rightClickMenu(fileId) {
         const rightMenu = [
-          { title: 'Delete', action: () => moveFileToTrash(fileId)},
-          { title: 'Duplicate', action: () => copyFile(fileId)},
+          { title: "Delete", action: () => moveFileToTrash(fileId) },
+          { title: "Duplicate", action: () => copyFile(fileId) },
         ];
 
         return (e) => {
@@ -274,95 +289,95 @@ limitations under the License.
         };
       }
 
-      function showRightClickMenu (x, y, menuItems) {
-        const rightClickMenuContainer = document.createElement('div');
-        rightClickMenuContainer.style.position = 'fixed';
+      function showRightClickMenu(x, y, menuItems) {
+        const rightClickMenuContainer = document.createElement("div");
+        rightClickMenuContainer.style.position = "fixed";
         rightClickMenuContainer.style.top = `${y}px`;
         rightClickMenuContainer.style.left = `${x}px`;
-        rightClickMenuContainer.style.backgroundColor = '#fff';
-        rightClickMenuContainer.style.border = '1px solid #ccc';
-        rightClickMenuContainer.style.zIndex = '1001';
+        rightClickMenuContainer.style.backgroundColor = "#fff";
+        rightClickMenuContainer.style.border = "1px solid #ccc";
+        rightClickMenuContainer.style.zIndex = "1001";
 
         menuItems.forEach((item) => {
-      const menuItem = document.createElement('div');
-      menuItem.innerText = item.title;
-      menuItem.style.padding = '8px';
-      menuItem.style.cursor = 'pointer';
+          const menuItem = document.createElement("div");
+          menuItem.innerText = item.title;
+          menuItem.style.padding = "8px";
+          menuItem.style.cursor = "pointer";
 
-      menuItem.addEventListener('click', () => {
-        rightClickMenuContainer.style.display = 'none';
-        item.action();
-      });
+          menuItem.addEventListener("click", () => {
+            rightClickMenuContainer.style.display = "none";
+            item.action();
+          });
 
-      rightClickMenuContainer.appendChild(menuItem);
-    });
-
-    document.body.appendChild(rightClickMenuContainer);
-
-    // Close the context menu when clicking outside of it
-    document.addEventListener('click', () => {
-      rightClickMenuContainer.style.display = 'none';
-    });
-      }
-
-    //   async function deleteFile(fileId) {
-    //   try {
-    //     await gapi.client.drive.files.delete({
-    //       'fileId': fileId,
-    //       'supportsAllDrives': true,
-    //       'enforceSingleParent': true,
-    //     });
-    //     // Optionally update your file list after deletion
-    //     await listFiles();
-    //   } catch (err) {
-    //     console.error('Error deleting file:', err);
-    //   }
-    // }
-
-    async function moveFileToTrash(fileId) {
-      try {
-        await gapi.client.request({
-          'path': `drive/v2/files/${fileId}/trash`,
-          'method': 'POST',
+          rightClickMenuContainer.appendChild(menuItem);
         });
-        // Optionally update your file list after moving to trash
-        await listFiles();
-      } catch (err) {
-        console.error('Error moving file to trash:', err);
-      }
-    }
-    async function copyFile(fileId) {
-      try {
-        await gapi.client.request({
-          'path': `drive/v2/files/${fileId}/copy`,
-          'method': 'POST',
+
+        document.body.appendChild(rightClickMenuContainer);
+
+        // Close the context menu when clicking outside of it
+        document.addEventListener("click", () => {
+          rightClickMenuContainer.style.display = "none";
         });
-       
-        await listFiles();
-      } catch (err) {
-        console.error('Error copying file to drive:', err);
       }
-    }
+
+      //   async function deleteFile(fileId) {
+      //   try {
+      //     await gapi.client.drive.files.delete({
+      //       'fileId': fileId,
+      //       'supportsAllDrives': true,
+      //       'enforceSingleParent': true,
+      //     });
+      //     // Optionally update your file list after deletion
+      //     await listFiles();
+      //   } catch (err) {
+      //     console.error('Error deleting file:', err);
+      //   }
+      // }
+
+      async function moveFileToTrash(fileId) {
+        try {
+          await gapi.client.request({
+            path: `drive/v2/files/${fileId}/trash`,
+            method: "POST",
+          });
+          // Optionally update your file list after moving to trash
+          await listFiles();
+        } catch (err) {
+          console.error("Error moving file to trash:", err);
+        }
+      }
+      async function copyFile(fileId) {
+        try {
+          await gapi.client.request({
+            path: `drive/v2/files/${fileId}/copy`,
+            method: "POST",
+          });
+
+          await listFiles();
+        } catch (err) {
+          console.error("Error copying file to drive:", err);
+        }
+      }
 
       function openPopup() {
-        document.getElementById('popup').style.display = 'block';
+        document.getElementById("popup").style.display = "block";
       }
 
       function closePopup() {
-        document.getElementById('popup').style.display = 'none';
+        document.getElementById("popup").style.display = "none";
       }
 
-
       async function createFile() {
-        const fileNameInput = document.getElementById('file_name');
+        const fileNameInput = document.getElementById("file_name");
         const fileName = fileNameInput.value.trim();
-        
+
         if (!fileName) {
-          alert('Please enter a valid file name.');
+          alert("Please enter a valid file name.");
           return;
         }
-        const fileTypeSelect = document.getElementById('file_type');
-        const selectedFileType = fileTypeSelect.options[fileTypeSelect.selectedIndex].value;
+        const fileTypeSelect = document.getElementById("file_type");
+        const selectedFileType =
+          fileTypeSelect.options[fileTypeSelect.selectedIndex].value;
 
         try {
           const response = await gapi.client.drive.files.create({
@@ -375,13 +390,24 @@ limitations under the License.
           // const file = response.result;
           // document.getElementById('content').innerText = `File created: ${file.name} (${file.id})`;
         } catch (err) {
-          document.getElementById('content').innerText = `Error creating file: ${err.message}`;
+          document.getElementById("content").innerText =
+            `Error creating file: ${err.message}`;
         }
         closePopup();
       }
     </script>
-    <script async defer src="https://apis.google.com/js/api.js" onload="gapiLoaded()"></script>
-    <script async defer src="https://accounts.google.com/gsi/client" onload="gisLoaded()"></script>
+    <script
+      async
+      defer
+      src="https://apis.google.com/js/api.js"
+      onload="gapiLoaded()"
+    ></script>
+    <script
+      async
+      defer
+      src="https://accounts.google.com/gsi/client"
+      onload="gisLoaded()"
+    ></script>
   </body>
 </html>
 <!-- [END drive_quickstart] -->
