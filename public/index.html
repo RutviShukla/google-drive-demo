@@ -57,6 +57,8 @@ limitations under the License.
     <button id="signout_button" onclick="handleSignoutClick()">Sign Out</button>
 
     <button id="create_file_button" onclick="openPopup()" style="visibility: hidden;">Create File</button>
+    <button id="empty_trash_button" onclick="emptyTrash()" style="visibility: hidden;">Empty Trash</button>
+
     <div id="popup">
       <label for="file_name">File Name:</label>
       <input type="text" id="file_name" placeholder="Enter file name" />
@@ -158,6 +160,8 @@ limitations under the License.
           document.getElementById('signout_button').style.visibility = 'visible';
           document.getElementById('authorize_button').innerText = 'Refresh';
           document.getElementById('create_file_button').style.visibility = 'visible';
+          document.getElementById('empty_trash_button').style.visibility = 'visible';
+          //document.getElementById('empty_trash').style.visibility = 'visible';
           await listFiles();
         };
 
@@ -262,10 +266,23 @@ limitations under the License.
         }
       }
 
+      async function emptyTrash() {
+    try {
+        await gapi.client.drive.files.emptyTrash();
+        console.log('Trash emptied successfully.');
+        // Optionally update your file list after emptying the trash
+        await listFiles();
+    } catch (err) {
+        console.error('Error emptying trash:', err);
+    }
+}
+
+
       function rightClickMenu(fileId) {
         const rightMenu = [
           { title: 'Delete', action: () => moveFileToTrash(fileId)},
           { title: 'Duplicate', action: () => copyFile(fileId)},
+          { title: 'Get Info', action: () => getInfo(fileId)},
         ];
 
         return (e) => {
@@ -337,12 +354,38 @@ limitations under the License.
           'path': `drive/v2/files/${fileId}/copy`,
           'method': 'POST',
         });
-       
+
         await listFiles();
       } catch (err) {
         console.error('Error copying file to drive:', err);
       }
     }
+
+    async function getInfo(fileId) {
+    try {
+        const response = await gapi.client.drive.files.get({
+            'fileId': fileId,
+            'fields': 'id, name, mimeType, createdTime, modifiedTime, size, parents',
+        });
+
+        const file = response.result;
+
+        const fileInfo = `
+            ID: ${file.id}
+            Name: ${file.name}
+            Type: ${file.mimeType}
+            Created Time: ${file.createdTime}
+            Modified Time: ${file.modifiedTime}
+            Size: ${file.size} bytes
+            Parents: ${file.parents.join(', ')}
+        `;
+        console.log('File Info:');
+        console.log(fileInfo);
+
+    } catch (err) {
+        console.error('Error getting file info:', err);
+    }
+}
 
       function openPopup() {
         document.getElementById('popup').style.display = 'block';
